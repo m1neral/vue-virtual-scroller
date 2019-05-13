@@ -1,3 +1,5 @@
+import Vue from 'vue';
+
 var config = {
   itemsLimit: 1000
 };
@@ -43,19 +45,21 @@ var ResizeObserver = { render: function render() {
 	name: 'resize-observer',
 
 	methods: {
-		notify: function notify() {
-			this.$emit('notify');
+		compareAndNotify: function compareAndNotify() {
+			if (this._w !== this.$el.offsetWidth || this._h !== this.$el.offsetHeight) {
+				this._w = this.$el.offsetWidth;
+				this._h = this.$el.offsetHeight;
+				this.$emit('notify');
+			}
 		},
 		addResizeHandlers: function addResizeHandlers() {
-			this._resizeObject.contentDocument.defaultView.addEventListener('resize', this.notify);
-			if (this._w !== this.$el.offsetWidth || this._h !== this.$el.offsetHeight) {
-				this.notify();
-			}
+			this._resizeObject.contentDocument.defaultView.addEventListener('resize', this.compareAndNotify);
+			this.compareAndNotify();
 		},
 		removeResizeHandlers: function removeResizeHandlers() {
 			if (this._resizeObject && this._resizeObject.onload) {
 				if (!isIE && this._resizeObject.contentDocument) {
-					this._resizeObject.contentDocument.defaultView.removeEventListener('resize', this.notify);
+					this._resizeObject.contentDocument.defaultView.removeEventListener('resize', this.compareAndNotify);
 				}
 				delete this._resizeObject.onload;
 			}
@@ -72,7 +76,6 @@ var ResizeObserver = { render: function render() {
 		});
 		var object = document.createElement('object');
 		this._resizeObject = object;
-		object.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
 		object.setAttribute('aria-hidden', 'true');
 		object.setAttribute('tabindex', -1);
 		object.onload = this.addResizeHandlers;
@@ -91,31 +94,155 @@ var ResizeObserver = { render: function render() {
 };
 
 // Install the components
-function install(Vue) {
-	Vue.component('resize-observer', ResizeObserver);
-	/* -- Add more components here -- */
+function install(Vue$$1) {
+	Vue$$1.component('resize-observer', ResizeObserver);
+	Vue$$1.component('ResizeObserver', ResizeObserver);
 }
 
-/* -- Plugin definition & Auto-install -- */
-/* You shouldn't have to modify the code below */
-
 // Plugin
-var plugin = {
+var plugin$2 = {
 	// eslint-disable-next-line no-undef
-	version: "0.4.4",
+	version: "0.4.5",
 	install: install
 };
 
 // Auto-install
-var GlobalVue = null;
+var GlobalVue$1 = null;
 if (typeof window !== 'undefined') {
-	GlobalVue = window.Vue;
+	GlobalVue$1 = window.Vue;
 } else if (typeof global !== 'undefined') {
-	GlobalVue = global.Vue;
+	GlobalVue$1 = global.Vue;
 }
-if (GlobalVue) {
-	GlobalVue.use(plugin);
+if (GlobalVue$1) {
+	GlobalVue$1.use(plugin$2);
 }
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+};
+
+
+
+
+
+var asyncGenerator = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
+
+  function AsyncGenerator(gen) {
+    var front, back;
+
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
+
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
+        }
+      });
+    }
+
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
+
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
+        }
+      } catch (err) {
+        settle("throw", err);
+      }
+    }
+
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
+
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
+
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
+
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
+
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
+
+
+
+
 
 var classCallCheck = function (instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -229,12 +356,26 @@ function throttle(callback, delay) {
 	return throttled;
 }
 
+function deepEqual(val1, val2) {
+	if (val1 === val2) return true;
+	if ((typeof val1 === 'undefined' ? 'undefined' : _typeof(val1)) === 'object') {
+		for (var key in val1) {
+			if (!deepEqual(val1[key], val2[key])) {
+				return false;
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
 var VisibilityState = function () {
 	function VisibilityState(el, options, vnode) {
 		classCallCheck(this, VisibilityState);
 
 		this.el = el;
 		this.observer = null;
+		this.frozen = false;
 		this.createObserver(options, vnode);
 	}
 
@@ -247,6 +388,8 @@ var VisibilityState = function () {
 				this.destroyObserver();
 			}
 
+			if (this.frozen) return;
+
 			this.options = processOptions(options);
 
 			this.callback = this.options.callback;
@@ -255,11 +398,20 @@ var VisibilityState = function () {
 				this.callback = throttle(this.callback, this.options.throttle);
 			}
 
+			this.oldResult = undefined;
+
 			this.observer = new IntersectionObserver(function (entries) {
 				var entry = entries[0];
 				if (_this.callback) {
 					// Use isIntersecting if possible because browsers can report isIntersecting as true, but intersectionRatio as 0, when something very slowly enters the viewport.
-					_this.callback(entry.isIntersecting && entry.intersectionRatio >= _this.threshold, entry);
+					var result = entry.isIntersecting && entry.intersectionRatio >= _this.threshold;
+					if (result === _this.oldResult) return;
+					_this.oldResult = result;
+					_this.callback(result, entry);
+					if (result && _this.options.once) {
+						_this.frozen = true;
+						_this.destroyObserver();
+					}
 				}
 			}, this.options.intersection);
 
@@ -273,11 +425,13 @@ var VisibilityState = function () {
 		value: function destroyObserver() {
 			if (this.observer) {
 				this.observer.disconnect();
+				this.observer = null;
 			}
 
 			// Cancel throttled call
 			if (this.callback && this.callback._clear) {
 				this.callback._clear();
+				this.callback = null;
 			}
 		}
 	}, {
@@ -289,39 +443,47 @@ var VisibilityState = function () {
 	return VisibilityState;
 }();
 
-var ObserveVisibility = {
-	bind: function bind(el, _ref, vnode) {
-		var value = _ref.value;
+function bind(el, _ref, vnode) {
+	var value = _ref.value;
 
-		if (typeof IntersectionObserver === 'undefined') {
-			console.warn('[vue-observe-visibility] IntersectionObserver API is not available in your browser. Please install this polyfill: https://github.com/w3c/IntersectionObserver/tree/master/polyfill');
-		} else {
-			var state = new VisibilityState(el, value, vnode);
-			el._vue_visibilityState = state;
-		}
-	},
-	update: function update(el, _ref2, vnode) {
-		var value = _ref2.value;
-
-		var state = el._vue_visibilityState;
-		if (state) {
-			state.createObserver(value, vnode);
-		} else {
-			this.bind(el, { value: value }, vnode);
-		}
-	},
-	unbind: function unbind(el) {
-		var state = el._vue_visibilityState;
-		if (state) {
-			state.destroyObserver();
-			delete el._vue_visibilityState;
-		}
+	if (typeof IntersectionObserver === 'undefined') {
+		console.warn('[vue-observe-visibility] IntersectionObserver API is not available in your browser. Please install this polyfill: https://github.com/w3c/IntersectionObserver/tree/master/polyfill');
+	} else {
+		var state = new VisibilityState(el, value, vnode);
+		el._vue_visibilityState = state;
 	}
+}
+
+function update(el, _ref2, vnode) {
+	var value = _ref2.value,
+	    oldValue = _ref2.oldValue;
+
+	if (deepEqual(value, oldValue)) return;
+	var state = el._vue_visibilityState;
+	if (state) {
+		state.createObserver(value, vnode);
+	} else {
+		bind(el, { value: value }, vnode);
+	}
+}
+
+function unbind(el) {
+	var state = el._vue_visibilityState;
+	if (state) {
+		state.destroyObserver();
+		delete el._vue_visibilityState;
+	}
+}
+
+var ObserveVisibility = {
+	bind: bind,
+	update: update,
+	unbind: unbind
 };
 
 // Install the components
-function install$1(Vue) {
-	Vue.directive('observe-visibility', ObserveVisibility);
+function install$1(Vue$$1) {
+	Vue$$1.directive('observe-visibility', ObserveVisibility);
 	/* -- Add more components here -- */
 }
 
@@ -329,24 +491,28 @@ function install$1(Vue) {
 /* You shouldn't have to modify the code below */
 
 // Plugin
-var plugin$1 = {
+var plugin$4 = {
 	// eslint-disable-next-line no-undef
-	version: "0.4.1",
+	version: "0.4.3",
 	install: install$1
 };
 
 // Auto-install
-var GlobalVue$1 = null;
+var GlobalVue$2 = null;
 if (typeof window !== 'undefined') {
-	GlobalVue$1 = window.Vue;
+	GlobalVue$2 = window.Vue;
 } else if (typeof global !== 'undefined') {
-	GlobalVue$1 = global.Vue;
+	GlobalVue$2 = global.Vue;
 }
-if (GlobalVue$1) {
-	GlobalVue$1.use(plugin$1);
+if (GlobalVue$2) {
+	GlobalVue$2.use(plugin$4);
 }
 
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+
+
+
 
 function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
@@ -356,7 +522,7 @@ var scrollparent = createCommonjsModule(function (module) {
 (function (root, factory) {
   if (typeof undefined === "function" && undefined.amd) {
     undefined([], factory);
-  } else if (module.exports) {
+  } else if ('object' === "object" && module.exports) {
     module.exports = factory();
   } else {
     root.Scrollparent = factory();
@@ -402,6 +568,194 @@ var scrollparent = createCommonjsModule(function (module) {
 }));
 });
 
+var _typeof$1 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+};
+
+
+
+
+
+var asyncGenerator$1 = function () {
+  function AwaitValue(value) {
+    this.value = value;
+  }
+
+  function AsyncGenerator(gen) {
+    var front, back;
+
+    function send(key, arg) {
+      return new Promise(function (resolve, reject) {
+        var request = {
+          key: key,
+          arg: arg,
+          resolve: resolve,
+          reject: reject,
+          next: null
+        };
+
+        if (back) {
+          back = back.next = request;
+        } else {
+          front = back = request;
+          resume(key, arg);
+        }
+      });
+    }
+
+    function resume(key, arg) {
+      try {
+        var result = gen[key](arg);
+        var value = result.value;
+
+        if (value instanceof AwaitValue) {
+          Promise.resolve(value.value).then(function (arg) {
+            resume("next", arg);
+          }, function (arg) {
+            resume("throw", arg);
+          });
+        } else {
+          settle(result.done ? "return" : "normal", result.value);
+        }
+      } catch (err) {
+        settle("throw", err);
+      }
+    }
+
+    function settle(type, value) {
+      switch (type) {
+        case "return":
+          front.resolve({
+            value: value,
+            done: true
+          });
+          break;
+
+        case "throw":
+          front.reject(value);
+          break;
+
+        default:
+          front.resolve({
+            value: value,
+            done: false
+          });
+          break;
+      }
+
+      front = front.next;
+
+      if (front) {
+        resume(front.key, front.arg);
+      } else {
+        back = null;
+      }
+    }
+
+    this._invoke = send;
+
+    if (typeof gen.return !== "function") {
+      this.return = undefined;
+    }
+  }
+
+  if (typeof Symbol === "function" && Symbol.asyncIterator) {
+    AsyncGenerator.prototype[Symbol.asyncIterator] = function () {
+      return this;
+    };
+  }
+
+  AsyncGenerator.prototype.next = function (arg) {
+    return this._invoke("next", arg);
+  };
+
+  AsyncGenerator.prototype.throw = function (arg) {
+    return this._invoke("throw", arg);
+  };
+
+  AsyncGenerator.prototype.return = function (arg) {
+    return this._invoke("return", arg);
+  };
+
+  return {
+    wrap: function (fn) {
+      return function () {
+        return new AsyncGenerator(fn.apply(this, arguments));
+      };
+    },
+    await: function (value) {
+      return new AwaitValue(value);
+    }
+  };
+}();
+
+
+
+
+
+
+
+
+
+
+
+
+
+var defineProperty = function (obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+};
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+var props = {
+  items: {
+    type: Array,
+    required: true
+  },
+
+  keyField: {
+    type: String,
+    default: 'id'
+  },
+
+  direction: {
+    type: String,
+    default: 'vertical',
+    validator: function validator(value) {
+      return ['vertical', 'horizontal'].includes(value);
+    }
+  }
+};
+
+function simpleArray() {
+  return this.items.length && _typeof$1(this.items[0]) !== 'object';
+}
+
 var supportsPassive = false;
 
 if (typeof window !== 'undefined') {
@@ -416,8 +770,21 @@ if (typeof window !== 'undefined') {
   } catch (e) {}
 }
 
-// @vue/component
-var Scroller = {
+var uid = 0;
+
+var RecycleScroller = { render: function render() {
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('div', { directives: [{ name: "observe-visibility", rawName: "v-observe-visibility", value: _vm.handleVisibilityChange, expression: "handleVisibilityChange" }], staticClass: "vue-recycle-scroller", class: defineProperty({ ready: _vm.ready, 'page-mode': _vm.pageMode }, 'direction-' + _vm.direction, true), on: { "&scroll": function scroll($event) {
+          return _vm.handleScroll($event);
+        } } }, [_vm.$slots.before ? _c('div', { staticClass: "vue-recycle-scroller__slot" }, [_vm._t("before")], 2) : _vm._e(), _vm._v(" "), _c('div', { ref: "wrapper", staticClass: "vue-recycle-scroller__item-wrapper", style: defineProperty({}, _vm.direction === 'vertical' ? 'minHeight' : 'minWidth', _vm.totalSize + 'px') }, _vm._l(_vm.pool, function (view) {
+      return _c('div', { key: view.nr.id, staticClass: "vue-recycle-scroller__item-view", class: { hover: _vm.hoverKey === view.nr.key }, style: _vm.ready ? { transform: 'translate' + (_vm.direction === 'vertical' ? 'Y' : 'X') + '(' + view.position + 'px)' } : null, on: { "mouseenter": function mouseenter($event) {
+            _vm.hoverKey = view.nr.key;
+          }, "mouseleave": function mouseleave($event) {
+            _vm.hoverKey = null;
+          } } }, [_vm._t("default", null, { item: view.item, index: view.nr.index, active: view.nr.used })], 2);
+    }), 0), _vm._v(" "), _vm.$slots.after ? _c('div', { staticClass: "vue-recycle-scroller__slot" }, [_vm._t("after")], 2) : _vm._e(), _vm._v(" "), _c('ResizeObserver', { on: { "notify": _vm.handleResize } })], 1);
+  }, staticRenderFns: [],
+  name: 'RecycleScroller',
+
   components: {
     ResizeObserver: ResizeObserver
   },
@@ -426,611 +793,83 @@ var Scroller = {
     ObserveVisibility: ObserveVisibility
   },
 
-  props: {
-    items: {
-      type: Array,
-      required: true
+  props: _extends({}, props, {
+
+    itemSize: {
+      type: Number,
+      default: null
     },
-    itemHeight: {
+
+    minItemSize: {
       type: [Number, String],
       default: null
     },
-    minItemHeight: {
-      type: [Number, String],
-      default: null
-    },
-    heightField: {
+
+    sizeField: {
       type: String,
-      default: 'height'
+      default: 'size'
     },
+
     typeField: {
       type: String,
       default: 'type'
     },
+
     buffer: {
-      type: [Number, String],
+      type: Number,
       default: 200
     },
+
     pageMode: {
       type: Boolean,
       default: false
     },
+
     prerender: {
-      type: [Number, String],
+      type: Number,
       default: 0
     },
+
     emitUpdate: {
       type: Boolean,
       default: false
     }
-  },
-
-  computed: {
-    cssClass: function cssClass() {
-      return {
-        'page-mode': this.pageMode
-      };
-    },
-    heights: function heights() {
-      if (this.itemHeight === null) {
-        var heights = {
-          '-1': { accumulator: 0 }
-        };
-        var items = this.items;
-        var field = this.heightField;
-        var minItemHeight = this.minItemHeight;
-        var accumulator = 0;
-        var current = void 0;
-        for (var i = 0, l = items.length; i < l; i++) {
-          current = items[i][field] || minItemHeight;
-          accumulator += current;
-          heights[i] = { accumulator: accumulator, height: current };
-        }
-        return heights;
-      }
-    }
-  },
-
-  beforeDestroy: function beforeDestroy() {
-    this.removeListeners();
-  },
-
-
-  methods: {
-    getListenerTarget: function getListenerTarget() {
-      var target = scrollparent(this.$el);
-      if (target === window.document.documentElement) {
-        target = window;
-      }
-      return target;
-    },
-    getScroll: function getScroll() {
-      var el = this.$el;
-      var scrollState = void 0;
-
-      if (this.pageMode) {
-        var rect = el.getBoundingClientRect();
-        var top = -rect.top;
-        var height = window.innerHeight;
-        if (top < 0) {
-          height += top;
-          top = 0;
-        }
-        if (top + height > rect.height) {
-          height = rect.height - top;
-        }
-        scrollState = {
-          top: top,
-          bottom: top + height
-        };
-      } else {
-        scrollState = {
-          top: el.scrollTop,
-          bottom: el.scrollTop + el.clientHeight
-        };
-      }
-
-      return scrollState;
-    },
-    applyPageMode: function applyPageMode() {
-      if (this.pageMode) {
-        this.addListeners();
-      } else {
-        this.removeListeners();
-      }
-    },
-    addListeners: function addListeners() {
-      this.listenerTarget = this.getListenerTarget();
-      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive ? {
-        passive: true
-      } : false);
-      this.listenerTarget.addEventListener('resize', this.handleResize);
-    },
-    removeListeners: function removeListeners() {
-      if (!this.listenerTarget) {
-        return;
-      }
-
-      this.listenerTarget.removeEventListener('scroll', this.handleScroll);
-      this.listenerTarget.removeEventListener('resize', this.handleResize);
-
-      this.listenerTarget = null;
-    },
-    scrollToItem: function scrollToItem(index) {
-      var scrollTop = void 0;
-      if (this.itemHeight === null) {
-        scrollTop = index > 0 ? this.heights[index - 1].accumulator : 0;
-      } else {
-        scrollTop = index * this.itemHeight;
-      }
-      this.scrollToPosition(scrollTop);
-    },
-    scrollToPosition: function scrollToPosition(position) {
-      this.$el.scrollTop = position;
-    },
-    itemsLimitError: function itemsLimitError() {
-      var _this = this;
-
-      setTimeout(function () {
-        console.log('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', _this.$el);
-        console.log('Make sure the scroller has a fixed height and \'overflow-y\' set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.');
-      });
-      throw new Error('Rendered items limit reached');
-    }
-  }
-};
-
-//
-
-var script = {
-  name: 'VirtualScroller',
-
-  mixins: [Scroller],
-
-  props: {
-    renderers: {
-      type: Object,
-      default: null
-    },
-    keyField: {
-      type: String,
-      default: 'id'
-    },
-    mainTag: {
-      type: String,
-      default: 'div'
-    },
-    containerTag: {
-      type: String,
-      default: 'div'
-    },
-    containerClass: {
-      type: [String, Array, Object],
-      default: null
-    },
-    contentTag: {
-      type: String,
-      default: 'div'
-    },
-    contentClass: {
-      type: [String, Array, Object],
-      default: null
-    },
-    poolSize: {
-      type: [Number, String],
-      default: 2000
-    },
-    delayPreviousItems: {
-      type: Boolean,
-      default: false
-    }
-  },
-
-  data: function data() {
-    return {
-      visibleItems: [],
-      itemContainerStyle: null,
-      itemsStyle: null,
-      keysEnabled: true
-    };
-  },
-
-
-  watch: {
-    items: {
-      handler: function handler() {
-        this.updateVisibleItems(true);
-      },
-
-      deep: true
-    },
-    pageMode: function pageMode() {
-      this.applyPageMode();
-      this.updateVisibleItems(true);
-    },
-
-    itemHeight: 'setDirty'
-  },
-
-  created: function created() {
-    this.$_ready = false;
-    this.$_startIndex = 0;
-    this.$_oldScrollTop = null;
-    this.$_oldScrollBottom = null;
-    this.$_offsetTop = 0;
-    this.$_height = 0;
-    this.$_scrollDirty = false;
-    this.$_updateDirty = false;
-
-    var prerender = parseInt(this.prerender);
-    if (prerender > 0) {
-      this.visibleItems = this.items.slice(0, prerender);
-      this.$_length = this.visibleItems.length;
-      this.$_endIndex = this.$_length - 1;
-      this.$_skip = true;
-    } else {
-      this.$_endIndex = 0;
-      this.$_length = 0;
-      this.$_skip = false;
-    }
-  },
-  mounted: function mounted() {
-    var _this = this;
-
-    this.applyPageMode();
-    this.$nextTick(function () {
-      _this.updateVisibleItems(true);
-      _this.$_ready = true;
-    });
-  },
-
-
-  methods: {
-    updateVisibleItems: function updateVisibleItems() {
-      var _this2 = this;
-
-      var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-      if (!this.$_updateDirty) {
-        this.$_updateDirty = true;
-        this.$nextTick(function () {
-          _this2.$_updateDirty = false;
-
-          var l = _this2.items.length;
-          var scroll = _this2.getScroll();
-          var items = _this2.items;
-          var itemHeight = _this2.itemHeight;
-          var containerHeight = void 0,
-              offsetTop = void 0;
-          if (scroll) {
-            var startIndex = -1;
-            var endIndex = -1;
-
-            var buffer = parseInt(_this2.buffer);
-            var poolSize = parseInt(_this2.poolSize);
-            var scrollTop = ~~(scroll.top / poolSize) * poolSize - buffer;
-            var scrollBottom = Math.ceil(scroll.bottom / poolSize) * poolSize + buffer;
-
-            if (!force && (scrollTop === _this2.$_oldScrollTop && scrollBottom === _this2.$_oldScrollBottom || _this2.$_skip)) {
-              _this2.$_skip = false;
-              return;
-            } else {
-              _this2.$_oldScrollTop = scrollTop;
-              _this2.$_oldScrollBottom = scrollBottom;
-            }
-
-            // Variable height mode
-            if (itemHeight === null) {
-              var heights = _this2.heights;
-              var h = void 0;
-              var a = 0;
-              var b = l - 1;
-              var i = ~~(l / 2);
-              var oldI = void 0;
-
-              // Searching for startIndex
-              do {
-                oldI = i;
-                h = heights[i].accumulator;
-                if (h < scrollTop) {
-                  a = i;
-                } else if (i < l - 1 && heights[i + 1].accumulator > scrollTop) {
-                  b = i;
-                }
-                i = ~~((a + b) / 2);
-              } while (i !== oldI);
-              i < 0 && (i = 0);
-              startIndex = i;
-
-              // For containers style
-              offsetTop = i > 0 ? heights[i - 1].accumulator : 0;
-              containerHeight = heights[l - 1].accumulator;
-
-              // Searching for endIndex
-              for (endIndex = i; endIndex < l && heights[endIndex].accumulator < scrollBottom; endIndex++) {}
-              if (endIndex === -1) {
-                endIndex = items.length - 1;
-              } else {
-                endIndex++;
-                // Bounds
-                endIndex > l && (endIndex = l);
-              }
-            } else {
-              // Fixed height mode
-              startIndex = ~~(scrollTop / itemHeight);
-              endIndex = Math.ceil(scrollBottom / itemHeight);
-
-              // Bounds
-              startIndex < 0 && (startIndex = 0);
-              endIndex > l && (endIndex = l);
-
-              offsetTop = startIndex * itemHeight;
-              containerHeight = l * itemHeight;
-            }
-
-            if (endIndex - startIndex > config.itemsLimit) {
-              _this2.itemsLimitError();
-            }
-
-            if (force || _this2.$_startIndex !== startIndex || _this2.$_endIndex !== endIndex || _this2.$_offsetTop !== offsetTop || _this2.$_height !== containerHeight || _this2.$_length !== l) {
-              _this2.keysEnabled = !(startIndex > _this2.$_endIndex || endIndex < _this2.$_startIndex);
-
-              _this2.itemContainerStyle = {
-                height: containerHeight + 'px'
-              };
-              _this2.itemsStyle = {
-                marginTop: offsetTop + 'px'
-              };
-
-              if (_this2.delayPreviousItems) {
-                // Add next items
-                _this2.visibleItems = items.slice(_this2.$_startIndex, endIndex);
-                // Remove previous items
-                _this2.$nextTick(function () {
-                  _this2.visibleItems = items.slice(startIndex, endIndex);
-                });
-              } else {
-                _this2.visibleItems = items.slice(startIndex, endIndex);
-              }
-
-              _this2.emitUpdate && _this2.$emit('update', startIndex, endIndex);
-
-              _this2.$_startIndex = startIndex;
-              _this2.$_endIndex = endIndex;
-              _this2.$_length = l;
-              _this2.$_offsetTop = offsetTop;
-              _this2.$_height = containerHeight;
-            }
-          }
-        });
-      }
-    },
-    setDirty: function setDirty() {
-      this.$_oldScrollTop = null;
-      this.$_oldScrollBottom = null;
-    },
-    handleScroll: function handleScroll() {
-      var _this3 = this;
-
-      if (!this.$_scrollDirty) {
-        this.$_scrollDirty = true;
-        requestAnimationFrame(function () {
-          _this3.$_scrollDirty = false;
-          _this3.updateVisibleItems();
-        });
-      }
-    },
-    handleResize: function handleResize() {
-      this.$emit('resize');
-      this.$_ready && this.updateVisibleItems();
-    },
-    handleVisibilityChange: function handleVisibilityChange(isVisible, entry) {
-      var _this4 = this;
-
-      if (this.$_ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
-        this.$emit('visible');
-        this.$nextTick(function () {
-          _this4.updateVisibleItems();
-        });
-      }
-    }
-  }
-};
-
-var __vue_script__ = script;
-
-/* template */
-var __vue_render__ = function __vue_render__() {
-  var _vm = this;
-  var _h = _vm.$createElement;
-  var _c = _vm._self._c || _h;
-  return _c(_vm.mainTag, {
-    directives: [{
-      name: "observe-visibility",
-      rawName: "v-observe-visibility",
-      value: _vm.handleVisibilityChange,
-      expression: "handleVisibilityChange"
-    }],
-    tag: "component",
-    staticClass: "virtual-scroller",
-    class: _vm.cssClass,
-    on: {
-      "&scroll": function scroll($event) {
-        return _vm.handleScroll($event);
-      }
-    }
-  }, [_vm._t("before-container"), _vm._v(" "), _c(_vm.containerTag, {
-    ref: "itemContainer",
-    tag: "component",
-    staticClass: "item-container",
-    class: _vm.containerClass,
-    style: _vm.itemContainerStyle
-  }, [_vm._t("before-content"), _vm._v(" "), _c(_vm.contentTag, {
-    ref: "items",
-    tag: "component",
-    staticClass: "items",
-    class: _vm.contentClass,
-    style: _vm.itemsStyle
-  }, [_vm.renderers ? _vm._l(_vm.visibleItems, function (item, index) {
-    return _c(_vm.renderers[item[_vm.typeField]], {
-      key: _vm.keysEnabled && item[_vm.keyField] || undefined,
-      tag: "component",
-      staticClass: "item",
-      attrs: {
-        item: item,
-        "item-index": _vm.$_startIndex + index
-      }
-    });
-  }) : [_vm._l(_vm.visibleItems, function (item, index) {
-    return _vm._t("default", null, {
-      item: item,
-      itemIndex: _vm.$_startIndex + index,
-      itemKey: _vm.keysEnabled && item[_vm.keyField] || undefined
-    });
-  })]], 2), _vm._v(" "), _vm._t("after-content")], 2), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c("resize-observer", { on: { notify: _vm.handleResize } })], 2);
-};
-var __vue_staticRenderFns__ = [];
-__vue_render__._withStripped = true;
-
-var __vue_template__ = typeof __vue_render__ !== 'undefined' ? { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ } : {};
-/* style */
-var __vue_inject_styles__ = function (inject) {
-  if (!inject) return;
-  inject("data-v-caa2d078_0", { source: "\n.virtual-scroller[data-v-caa2d078]:not(.page-mode) {\n  overflow-y: auto;\n}\n.item-container[data-v-caa2d078] {\n  box-sizing: border-box;\n  width: 100%;\n  overflow: hidden;\n}\n.items[data-v-caa2d078] {\n  width: 100%;\n}\n", map: undefined, media: undefined });
-};
-/* scoped */
-var __vue_scope_id__ = "data-v-caa2d078";
-/* module identifier */
-var __vue_module_identifier__ = undefined;
-/* functional template */
-var __vue_is_functional_template__ = false;
-/* component normalizer */
-function __vue_normalize__(template, style, script$$1, scope, functional, moduleIdentifier, createInjector, createInjectorSSR) {
-  var component = (typeof script$$1 === 'function' ? script$$1.options : script$$1) || {};
-
-  {
-    component.__file = "/home/akryum/Projets/vue-virtual-scroller/src/components/VirtualScroller.vue";
-  }
-
-  if (!component.render) {
-    component.render = template.render;
-    component.staticRenderFns = template.staticRenderFns;
-    component._compiled = true;
-
-    if (functional) component.functional = true;
-  }
-
-  component._scopeId = scope;
-
-  {
-    var hook = void 0;
-    if (style) {
-      hook = function hook(context) {
-        style.call(this, createInjector(context));
-      };
-    }
-
-    if (hook !== undefined) {
-      if (component.functional) {
-        // register for functional component in vue file
-        var originalRender = component.render;
-        component.render = function renderWithStyleInjection(h, context) {
-          hook.call(context);
-          return originalRender(h, context);
-        };
-      } else {
-        // inject component registration as beforeCreate hook
-        var existing = component.beforeCreate;
-        component.beforeCreate = existing ? [].concat(existing, hook) : [hook];
-      }
-    }
-  }
-
-  return component;
-}
-/* style inject */
-function __vue_create_injector__() {
-  var head = document.head || document.getElementsByTagName('head')[0];
-  var styles = __vue_create_injector__.styles || (__vue_create_injector__.styles = {});
-  var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\\b/.test(navigator.userAgent.toLowerCase());
-
-  return function addStyle(id, css) {
-    if (document.querySelector('style[data-vue-ssr-id~="' + id + '"]')) return; // SSR styles are present.
-
-    var group = isOldIE ? css.media || 'default' : id;
-    var style = styles[group] || (styles[group] = { ids: [], parts: [], element: undefined });
-
-    if (!style.ids.includes(id)) {
-      var code = css.source;
-      var index = style.ids.length;
-
-      style.ids.push(id);
-
-      if (isOldIE) {
-        style.element = style.element || document.querySelector('style[data-group=' + group + ']');
-      }
-
-      if (!style.element) {
-        var el = style.element = document.createElement('style');
-        el.type = 'text/css';
-
-        if (css.media) el.setAttribute('media', css.media);
-        if (isOldIE) {
-          el.setAttribute('data-group', group);
-          el.setAttribute('data-next-index', '0');
-        }
-
-        head.appendChild(el);
-      }
-
-      if (isOldIE) {
-        index = parseInt(style.element.getAttribute('data-next-index'));
-        style.element.setAttribute('data-next-index', index + 1);
-      }
-
-      if (style.element.styleSheet) {
-        style.parts.push(code);
-        style.element.styleSheet.cssText = style.parts.filter(Boolean).join('\n');
-      } else {
-        var textNode = document.createTextNode(code);
-        var nodes = style.element.childNodes;
-        if (nodes[index]) style.element.removeChild(nodes[index]);
-        if (nodes.length) style.element.insertBefore(textNode, nodes[index]);else style.element.appendChild(textNode);
-      }
-    }
-  };
-}
-/* style inject SSR */
-
-var VirtualScroller = __vue_normalize__(__vue_template__, __vue_inject_styles__, typeof __vue_script__ === 'undefined' ? {} : __vue_script__, __vue_scope_id__, __vue_is_functional_template__, __vue_module_identifier__, typeof __vue_create_injector__ !== 'undefined' ? __vue_create_injector__ : function () {}, typeof __vue_create_injector_ssr__ !== 'undefined' ? __vue_create_injector_ssr__ : function () {});
-
-//
-
-var uid = 0;
-
-var script$1 = {
-  name: 'RecycleList',
-
-  mixins: [Scroller],
-
-  props: {
-    itemHeight: {
-      type: Number,
-      default: null
-    },
-    keyField: {
-      type: String,
-      default: null
-    }
-  },
+  }),
 
   data: function data() {
     return {
       pool: [],
-      totalHeight: 0
+      totalSize: 0,
+      ready: false,
+      hoverKey: null
     };
   },
 
+
+  computed: {
+    sizes: function sizes() {
+      if (this.itemSize === null) {
+        var sizes = {
+          '-1': { accumulator: 0 }
+        };
+        var items = this.items;
+        var field = this.sizeField;
+        var minItemSize = this.minItemSize;
+        var accumulator = 0;
+        var current = void 0;
+        for (var i = 0, l = items.length; i < l; i++) {
+          current = items[i][field] || minItemSize;
+          accumulator += current;
+          sizes[i] = { accumulator: accumulator, size: current };
+        }
+        return sizes;
+      }
+      return [];
+    },
+
+
+    simpleArray: simpleArray
+  },
 
   watch: {
     items: function items() {
@@ -1041,7 +880,8 @@ var script$1 = {
       this.updateVisibleItems(false);
     },
 
-    heights: {
+
+    sizes: {
       handler: function handler() {
         this.updateVisibleItems(false);
       },
@@ -1051,14 +891,15 @@ var script$1 = {
   },
 
   created: function created() {
-    this.$_ready = false;
     this.$_startIndex = 0;
     this.$_endIndex = 0;
     this.$_views = new Map();
     this.$_unusedViews = new Map();
     this.$_scrollDirty = false;
 
-    // TODO prerender
+    if (this.$isServer) {
+      this.updateVisibleItems(false);
+    }
   },
   mounted: function mounted() {
     var _this = this;
@@ -1066,8 +907,11 @@ var script$1 = {
     this.applyPageMode();
     this.$nextTick(function () {
       _this.updateVisibleItems(true);
-      _this.$_ready = true;
+      _this.ready = true;
     });
+  },
+  beforeDestroy: function beforeDestroy() {
+    this.removeListeners();
   },
 
 
@@ -1075,7 +919,7 @@ var script$1 = {
     addView: function addView(pool, index, item, key, type) {
       var view = {
         item: item,
-        top: 0
+        position: 0
       };
       var nonReactive = {
         id: uid++,
@@ -1104,13 +948,13 @@ var script$1 = {
       unusedPool.push(view);
       if (!fake) {
         view.nr.used = false;
-        view.top = -9999;
+        view.position = -9999;
         this.$_views.delete(view.nr.key);
       }
     },
     handleResize: function handleResize() {
       this.$emit('resize');
-      if (this.$_ready) this.updateVisibleItems(false);
+      if (this.ready) this.updateVisibleItems(false);
     },
     handleScroll: function handleScroll(event) {
       var _this2 = this;
@@ -1137,37 +981,45 @@ var script$1 = {
     handleVisibilityChange: function handleVisibilityChange(isVisible, entry) {
       var _this3 = this;
 
-      if (this.$_ready && (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0)) {
-        this.$emit('visible');
-        requestAnimationFrame(function () {
-          _this3.updateVisibleItems(false);
-        });
+      if (this.ready) {
+        if (isVisible || entry.boundingClientRect.width !== 0 || entry.boundingClientRect.height !== 0) {
+          this.$emit('visible');
+          requestAnimationFrame(function () {
+            _this3.updateVisibleItems(false);
+          });
+        } else {
+          this.$emit('hidden');
+        }
       }
     },
     updateVisibleItems: function updateVisibleItems(checkItem) {
-      var scroll = this.getScroll();
-      var buffer = parseInt(this.buffer);
-      scroll.top -= buffer;
-      scroll.bottom += buffer;
-
-      var itemHeight = this.itemHeight;
+      var itemSize = this.itemSize;
       var typeField = this.typeField;
-      var keyField = this.keyField;
+      var keyField = this.simpleArray ? null : this.keyField;
       var items = this.items;
       var count = items.length;
-      var heights = this.heights;
+      var sizes = this.sizes;
       var views = this.$_views;
       var unusedViews = this.$_unusedViews;
       var pool = this.pool;
       var startIndex = void 0,
           endIndex = void 0;
-      var totalHeight = void 0;
+      var totalSize = void 0;
 
       if (!count) {
-        startIndex = endIndex = totalHeight = 0;
+        startIndex = endIndex = totalSize = 0;
+      } else if (this.$isServer) {
+        startIndex = 0;
+        endIndex = this.prerender;
+        totalSize = null;
       } else {
-        // Variable height mode
-        if (itemHeight === null) {
+        var scroll = this.getScroll();
+        var buffer = this.buffer;
+        scroll.start -= buffer;
+        scroll.end += buffer;
+
+        // Variable size mode
+        if (itemSize === null) {
           var h = void 0;
           var a = 0;
           var b = count - 1;
@@ -1177,10 +1029,10 @@ var script$1 = {
           // Searching for startIndex
           do {
             oldI = i;
-            h = heights[i].accumulator;
-            if (h < scroll.top) {
+            h = sizes[i].accumulator;
+            if (h < scroll.start) {
               a = i;
-            } else if (i < count - 1 && heights[i + 1].accumulator > scroll.top) {
+            } else if (i < count - 1 && sizes[i + 1].accumulator > scroll.start) {
               b = i;
             }
             i = ~~((a + b) / 2);
@@ -1189,10 +1041,10 @@ var script$1 = {
           startIndex = i;
 
           // For container style
-          totalHeight = heights[count - 1].accumulator;
+          totalSize = sizes[count - 1].accumulator;
 
           // Searching for endIndex
-          for (endIndex = i; endIndex < count && heights[endIndex].accumulator < scroll.bottom; endIndex++) {}
+          for (endIndex = i; endIndex < count && sizes[endIndex].accumulator < scroll.end; endIndex++) {}
           if (endIndex === -1) {
             endIndex = items.length - 1;
           } else {
@@ -1201,15 +1053,15 @@ var script$1 = {
             endIndex > count && (endIndex = count);
           }
         } else {
-          // Fixed height mode
-          startIndex = ~~(scroll.top / itemHeight);
-          endIndex = Math.ceil(scroll.bottom / itemHeight);
+          // Fixed size mode
+          startIndex = ~~(scroll.start / itemSize);
+          endIndex = Math.ceil(scroll.end / itemSize);
 
           // Bounds
           startIndex < 0 && (startIndex = 0);
           endIndex > count && (endIndex = count);
 
-          totalHeight = count * itemHeight;
+          totalSize = count * itemSize;
         }
       }
 
@@ -1217,7 +1069,7 @@ var script$1 = {
         this.itemsLimitError();
       }
 
-      this.totalHeight = totalHeight;
+      this.totalSize = totalSize;
 
       var view = void 0;
 
@@ -1246,7 +1098,7 @@ var script$1 = {
             }
 
             // Check if index is still in visible range
-            if (view.nr.index === -1 || view.nr.index < startIndex || view.nr.index > endIndex) {
+            if (view.nr.index === -1 || view.nr.index < startIndex || view.nr.index >= endIndex) {
               this.unuseView(view);
             }
           }
@@ -1266,7 +1118,7 @@ var script$1 = {
         var key = keyField ? item[keyField] : item;
         view = views.get(key);
 
-        if (!itemHeight && !heights[_i3].height) {
+        if (!itemSize && !sizes[_i3].size) {
           if (view) this.unuseView(view);
           continue;
         }
@@ -1311,189 +1163,571 @@ var script$1 = {
           views.set(key, view);
         } else {
           view.nr.used = true;
+          view.item = item;
         }
 
         // Update position
-        if (itemHeight === null) {
-          view.top = heights[_i3 - 1].accumulator;
+        if (itemSize === null) {
+          view.position = sizes[_i3 - 1].accumulator;
         } else {
-          view.top = _i3 * itemHeight;
+          view.position = _i3 * itemSize;
         }
       }
 
       this.$_startIndex = startIndex;
       this.$_endIndex = endIndex;
 
-      this.emitUpdate && this.$emit('update', startIndex, endIndex);
+      if (this.emitUpdate) this.$emit('update', startIndex, endIndex);
 
       return {
         continuous: continuous
       };
-    }
-  }
-};
-
-var __vue_script__$1 = script$1;
-
-/* template */
-var __vue_render__$1 = function __vue_render__() {
-  var _vm = this;
-  var _h = _vm.$createElement;
-  var _c = _vm._self._c || _h;
-  return _c("div", {
-    directives: [{
-      name: "observe-visibility",
-      rawName: "v-observe-visibility",
-      value: _vm.handleVisibilityChange,
-      expression: "handleVisibilityChange"
-    }],
-    staticClass: "recycle-list",
-    class: _vm.cssClass,
-    on: {
-      "&scroll": function scroll($event) {
-        return _vm.handleScroll($event);
+    },
+    getListenerTarget: function getListenerTarget() {
+      var target = scrollparent(this.$el);
+      // Fix global scroll target for Chrome and Safari
+      if (window.document && (target === window.document.documentElement || target === window.document.body)) {
+        target = window;
       }
-    }
-  }, [_c("div", {
-    ref: "wrapper",
-    staticClass: "item-wrapper",
-    style: { height: _vm.totalHeight + "px" }
-  }, _vm._l(_vm.pool, function (view) {
-    return _c("div", {
-      key: view.nr.id,
-      staticClass: "item-view",
-      style: { transform: "translateY(" + view.top + "px)" }
-    }, [_vm._t("default", null, {
-      item: view.item,
-      index: view.nr.index,
-      active: view.nr.used
-    })], 2);
-  })), _vm._v(" "), _vm._t("after-container"), _vm._v(" "), _c("resize-observer", { on: { notify: _vm.handleResize } })], 2);
-};
-var __vue_staticRenderFns__$1 = [];
-__vue_render__$1._withStripped = true;
+      return target;
+    },
+    getScroll: function getScroll() {
+      var el = this.$el,
+          direction = this.direction;
 
-var __vue_template__$1 = typeof __vue_render__$1 !== 'undefined' ? { render: __vue_render__$1, staticRenderFns: __vue_staticRenderFns__$1 } : {};
-/* style */
-var __vue_inject_styles__$1 = function (inject) {
-  if (!inject) return;
-  inject("data-v-0ff19954_0", { source: "\n.recycle-list[data-v-0ff19954]:not(.page-mode) {\n  overflow-y: auto;\n}\n.item-wrapper[data-v-0ff19954] {\n  box-sizing: border-box;\n  width: 100%;\n  overflow: hidden;\n  position: relative;\n}\n.item-view[data-v-0ff19954] {\n  width: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n  will-change: transform;\n}\n", map: undefined, media: undefined });
-};
-/* scoped */
-var __vue_scope_id__$1 = "data-v-0ff19954";
-/* module identifier */
-var __vue_module_identifier__$1 = undefined;
-/* functional template */
-var __vue_is_functional_template__$1 = false;
-/* component normalizer */
-function __vue_normalize__$1(template, style, script, scope, functional, moduleIdentifier, createInjector, createInjectorSSR) {
-  var component = (typeof script === 'function' ? script.options : script) || {};
+      var isVertical = direction === 'vertical';
+      var scrollState = void 0;
 
-  {
-    component.__file = "/home/akryum/Projets/vue-virtual-scroller/src/components/RecycleList.vue";
-  }
-
-  if (!component.render) {
-    component.render = template.render;
-    component.staticRenderFns = template.staticRenderFns;
-    component._compiled = true;
-
-    if (functional) component.functional = true;
-  }
-
-  component._scopeId = scope;
-
-  {
-    var hook = void 0;
-    if (style) {
-      hook = function hook(context) {
-        style.call(this, createInjector(context));
-      };
-    }
-
-    if (hook !== undefined) {
-      if (component.functional) {
-        // register for functional component in vue file
-        var originalRender = component.render;
-        component.render = function renderWithStyleInjection(h, context) {
-          hook.call(context);
-          return originalRender(h, context);
+      if (this.pageMode) {
+        var bounds = el.getBoundingClientRect();
+        var boundsSize = isVertical ? bounds.height : bounds.width;
+        var start = -(isVertical ? bounds.top : bounds.left);
+        var size = isVertical ? window.innerHeight : window.innerWidth;
+        if (start < 0) {
+          size += start;
+          start = 0;
+        }
+        if (start + size > boundsSize) {
+          size = boundsSize - start;
+        }
+        scrollState = {
+          start: start,
+          end: start + size
+        };
+      } else if (isVertical) {
+        scrollState = {
+          start: el.scrollTop,
+          end: el.scrollTop + el.clientHeight
         };
       } else {
-        // inject component registration as beforeCreate hook
-        var existing = component.beforeCreate;
-        component.beforeCreate = existing ? [].concat(existing, hook) : [hook];
+        scrollState = {
+          start: el.scrollLeft,
+          end: el.scrollLeft + el.clientWidth
+        };
       }
+
+      return scrollState;
+    },
+    applyPageMode: function applyPageMode() {
+      if (this.pageMode) {
+        this.addListeners();
+      } else {
+        this.removeListeners();
+      }
+    },
+    addListeners: function addListeners() {
+      this.listenerTarget = this.getListenerTarget();
+      this.listenerTarget.addEventListener('scroll', this.handleScroll, supportsPassive ? {
+        passive: true
+      } : false);
+      this.listenerTarget.addEventListener('resize', this.handleResize);
+    },
+    removeListeners: function removeListeners() {
+      if (!this.listenerTarget) {
+        return;
+      }
+
+      this.listenerTarget.removeEventListener('scroll', this.handleScroll);
+      this.listenerTarget.removeEventListener('resize', this.handleResize);
+
+      this.listenerTarget = null;
+    },
+    scrollToItem: function scrollToItem(index) {
+      var scroll = void 0;
+      if (this.itemSize === null) {
+        scroll = index > 0 ? this.sizes[index - 1].accumulator : 0;
+      } else {
+        scroll = index * this.itemSize;
+      }
+      this.scrollToPosition(scroll);
+    },
+    scrollToPosition: function scrollToPosition(position) {
+      if (this.direction === 'vertical') {
+        this.$el.scrollTop = position;
+      } else {
+        this.$el.scrollLeft = position;
+      }
+    },
+    itemsLimitError: function itemsLimitError() {
+      var _this4 = this;
+
+      setTimeout(function () {
+        console.log('It seems the scroller element isn\'t scrolling, so it tries to render all the items at once.', 'Scroller:', _this4.$el);
+        console.log('Make sure the scroller has a fixed height (or width) and \'overflow-y\' (or \'overflow-x\') set to \'auto\' so it can scroll correctly and only render the items visible in the scroll viewport.');
+      });
+      throw new Error('Rendered items limit reached');
     }
   }
+};
 
-  return component;
-}
-/* style inject */
-function __vue_create_injector__$1() {
-  var head = document.head || document.getElementsByTagName('head')[0];
-  var styles = __vue_create_injector__$1.styles || (__vue_create_injector__$1.styles = {});
-  var isOldIE = typeof navigator !== 'undefined' && /msie [6-9]\\b/.test(navigator.userAgent.toLowerCase());
+var DynamicScroller = { render: function render() {
+    var _vm = this;var _h = _vm.$createElement;var _c = _vm._self._c || _h;return _c('RecycleScroller', _vm._g(_vm._b({ ref: "scroller", attrs: { "items": _vm.itemsWithSize, "min-item-size": _vm.minItemSize, "direction": _vm.direction, "key-field": "id" }, on: { "resize": _vm.onScrollerResize, "visible": _vm.onScrollerVisible }, scopedSlots: _vm._u([{ key: "default", fn: function fn(_ref) {
+          var itemWithSize = _ref.item,
+              index = _ref.index,
+              active = _ref.active;
+          return [_vm._t("default", null, null, {
+            item: itemWithSize.item,
+            index: index,
+            active: active,
+            itemWithSize: itemWithSize
+          })];
+        } }]) }, 'RecycleScroller', _vm.$attrs, false), _vm.listeners), [_c('template', { slot: "before" }, [_vm._t("before")], 2), _vm._v(" "), _c('template', { slot: "after" }, [_vm._t("after")], 2)], 2);
+  }, staticRenderFns: [],
+  name: 'DynamicScroller',
 
-  return function addStyle(id, css) {
-    if (document.querySelector('style[data-vue-ssr-id~="' + id + '"]')) return; // SSR styles are present.
+  components: {
+    RecycleScroller: RecycleScroller
+  },
 
-    var group = isOldIE ? css.media || 'default' : id;
-    var style = styles[group] || (styles[group] = { ids: [], parts: [], element: undefined });
+  inheritAttrs: false,
 
-    if (!style.ids.includes(id)) {
-      var code = css.source;
-      var index = style.ids.length;
+  provide: function provide() {
+    return {
+      vscrollData: this.vscrollData,
+      vscrollParent: this
+    };
+  },
 
-      style.ids.push(id);
 
-      if (isOldIE) {
-        style.element = style.element || document.querySelector('style[data-group=' + group + ']');
+  props: _extends({}, props, {
+
+    minItemSize: {
+      type: [Number, String],
+      required: true
+    }
+  }),
+
+  data: function data() {
+    return {
+      vscrollData: {
+        active: true,
+        sizes: {},
+        validSizes: {},
+        keyField: this.keyField,
+        simpleArray: false
       }
+    };
+  },
 
-      if (!style.element) {
-        var el = style.element = document.createElement('style');
-        el.type = 'text/css';
 
-        if (css.media) el.setAttribute('media', css.media);
-        if (isOldIE) {
-          el.setAttribute('data-group', group);
-          el.setAttribute('data-next-index', '0');
+  computed: {
+    simpleArray: simpleArray,
+
+    itemsWithSize: function itemsWithSize() {
+      var result = [];
+      var items = this.items,
+          keyField = this.keyField,
+          simpleArray$$1 = this.simpleArray;
+
+      var sizes = this.vscrollData.sizes;
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var id = simpleArray$$1 ? i : item[keyField];
+        var size = sizes[id];
+        if (typeof size === 'undefined' && !this.$_undefinedMap[id]) {
+          // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+          this.$_undefinedSizes++;
+          // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+          this.$_undefinedMap[id] = true;
+          size = 0;
         }
-
-        head.appendChild(el);
+        result.push({
+          item: item,
+          id: id,
+          size: size
+        });
       }
-
-      if (isOldIE) {
-        index = parseInt(style.element.getAttribute('data-next-index'));
-        style.element.setAttribute('data-next-index', index + 1);
+      return result;
+    },
+    listeners: function listeners() {
+      var listeners = {};
+      for (var key in this.$listeners) {
+        if (key !== 'resize' && key !== 'visible') {
+          listeners[key] = this.$listeners[key];
+        }
       }
+      return listeners;
+    }
+  },
 
-      if (style.element.styleSheet) {
-        style.parts.push(code);
-        style.element.styleSheet.cssText = style.parts.filter(Boolean).join('\n');
+  watch: {
+    items: function items() {
+      this.forceUpdate(false);
+    },
+
+
+    simpleArray: {
+      handler: function handler(value) {
+        this.vscrollData.simpleArray = value;
+      },
+
+      immediate: true
+    },
+
+    direction: function direction(value) {
+      this.forceUpdate(true);
+    }
+  },
+
+  created: function created() {
+    this.$_updates = [];
+    this.$_undefinedSizes = 0;
+    this.$_undefinedMap = {};
+  },
+  activated: function activated() {
+    this.vscrollData.active = true;
+  },
+  deactivated: function deactivated() {
+    this.vscrollData.active = false;
+  },
+
+
+  methods: {
+    onScrollerResize: function onScrollerResize() {
+      var scroller = this.$refs.scroller;
+      if (scroller) {
+        this.forceUpdate();
+      }
+      this.$emit('resize');
+    },
+    onScrollerVisible: function onScrollerVisible() {
+      this.$emit('vscroll:update', { force: false });
+      this.$emit('visible');
+    },
+    forceUpdate: function forceUpdate() {
+      var clear = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
+      if (clear || this.simpleArray) {
+        this.vscrollData.validSizes = {};
+      }
+      this.$emit('vscroll:update', { force: true });
+    },
+    scrollToItem: function scrollToItem(index) {
+      var scroller = this.$refs.scroller;
+      if (scroller) scroller.scrollToItem(index);
+    },
+    getItemSize: function getItemSize(item) {
+      var index = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
+
+      var id = this.simpleArray ? index != null ? index : this.items.indexOf(item) : item[this.keyField];
+      return this.vscrollData.sizes[id] || 0;
+    },
+    scrollToBottom: function scrollToBottom() {
+      var _this = this;
+
+      if (this.$_scrollingToBottom) return;
+      this.$_scrollingToBottom = true;
+      var el = this.$el;
+      // Item is inserted to the DOM
+      this.$nextTick(function () {
+        // Item sizes are computed
+        var cb = function cb() {
+          el.scrollTop = el.scrollHeight;
+          if (_this.$_undefinedSizes === 0) {
+            _this.$_scrollingToBottom = false;
+          } else {
+            requestAnimationFrame(cb);
+          }
+        };
+        requestAnimationFrame(cb);
+      });
+    }
+  }
+};
+
+var DynamicScrollerItem = {
+  name: 'DynamicScrollerItem',
+
+  inject: ['vscrollData', 'vscrollParent'],
+
+  props: {
+    item: {
+      required: true
+    },
+
+    watchData: {
+      type: Boolean,
+      default: false
+    },
+
+    active: {
+      type: Boolean,
+      required: true
+    },
+
+    index: {
+      type: Number,
+      default: undefined
+    },
+
+    sizeDependencies: {
+      type: [Array, Object],
+      default: null
+    },
+
+    emitResize: {
+      type: Boolean,
+      default: false
+    },
+
+    tag: {
+      type: String,
+      default: 'div'
+    }
+  },
+
+  computed: {
+    id: function id() {
+      return this.vscrollData.simpleArray ? this.index : this.item[this.vscrollData.keyField];
+    },
+    size: function size() {
+      return this.vscrollData.validSizes[this.id] && this.vscrollData.sizes[this.id] || 0;
+    }
+  },
+
+  watch: {
+    watchData: 'updateWatchData',
+
+    id: function id() {
+      if (!this.size) {
+        this.onDataUpdate();
+      }
+    },
+    active: function active(value) {
+      if (value && this.$_pendingVScrollUpdate === this.id) {
+        this.updateSize();
+      }
+    }
+  },
+
+  created: function created() {
+    var _this = this;
+
+    if (this.$isServer) return;
+
+    this.$_forceNextVScrollUpdate = null;
+    this.updateWatchData();
+
+    var _loop = function _loop(k) {
+      _this.$watch(function () {
+        return _this.sizeDependencies[k];
+      }, _this.onDataUpdate);
+    };
+
+    for (var k in this.sizeDependencies) {
+      _loop(k);
+    }
+
+    this.vscrollParent.$on('vscroll:update', this.onVscrollUpdate);
+    this.vscrollParent.$on('vscroll:update-size', this.onVscrollUpdateSize);
+  },
+  mounted: function mounted() {
+    if (this.vscrollData.active) {
+      this.updateSize();
+    }
+  },
+  beforeDestroy: function beforeDestroy() {
+    this.vscrollParent.$off('vscroll:update', this.onVscrollUpdate);
+    this.vscrollParent.$off('vscroll:update-size', this.onVscrollUpdateSize);
+  },
+
+
+  methods: {
+    updateSize: function updateSize() {
+      if (this.active && this.vscrollData.active) {
+        if (this.$_pendingSizeUpdate !== this.id) {
+          this.$_pendingSizeUpdate = this.id;
+          this.$_forceNextVScrollUpdate = null;
+          this.$_pendingVScrollUpdate = null;
+          if (this.active && this.vscrollData.active) {
+            this.computeSize(this.id);
+          }
+        }
       } else {
-        var textNode = document.createTextNode(code);
-        var nodes = style.element.childNodes;
-        if (nodes[index]) style.element.removeChild(nodes[index]);
-        if (nodes.length) style.element.insertBefore(textNode, nodes[index]);else style.element.appendChild(textNode);
+        this.$_forceNextVScrollUpdate = this.id;
+      }
+    },
+    getBounds: function getBounds() {
+      return this.$el.getBoundingClientRect();
+    },
+    updateWatchData: function updateWatchData() {
+      var _this2 = this;
+
+      if (this.watchData) {
+        this.$_watchData = this.$watch('data', function () {
+          _this2.onDataUpdate();
+        }, {
+          deep: true
+        });
+      } else if (this.$_watchData) {
+        this.$_watchData();
+        this.$_watchData = null;
+      }
+    },
+    onVscrollUpdate: function onVscrollUpdate(_ref) {
+      var force = _ref.force;
+
+      if (!this.active && force) {
+        this.$_pendingVScrollUpdate = this.id;
+      }
+      if (this.$_forceNextVScrollUpdate === this.id || force || !this.size) {
+        this.updateSize();
+      }
+    },
+    onDataUpdate: function onDataUpdate() {
+      this.updateSize();
+    },
+    computeSize: function computeSize(id) {
+      var _this3 = this;
+
+      this.$nextTick(function () {
+        if (_this3.id === id) {
+          var bounds = _this3.getBounds();
+          var size = Math.round(_this3.vscrollParent.direction === 'vertical' ? bounds.height : bounds.width);
+          if (size && _this3.size !== size) {
+            if (_this3.vscrollParent.$_undefinedMap[id]) {
+              _this3.vscrollParent.$_undefinedSizes--;
+              _this3.vscrollParent.$_undefinedMap[id] = undefined;
+            }
+            _this3.$set(_this3.vscrollData.sizes, _this3.id, size);
+            _this3.$set(_this3.vscrollData.validSizes, _this3.id, true);
+            if (_this3.emitResize) _this3.$emit('resize', _this3.id);
+          }
+        }
+        _this3.$_pendingSizeUpdate = null;
+      });
+    }
+  },
+
+  render: function render(h) {
+    return h(this.tag, this.$slots.default);
+  }
+};
+
+var IdState = function () {
+  var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+      _ref$idProp = _ref.idProp,
+      idProp = _ref$idProp === undefined ? function (vm) {
+    return vm.item.id;
+  } : _ref$idProp;
+
+  var store = {};
+  var vm = new Vue({
+    data: function data() {
+      return {
+        store: store
+      };
+    }
+  });
+
+  // @vue/component
+  return {
+    data: function data() {
+      return {
+        idState: null
+      };
+    },
+    created: function created() {
+      var _this = this;
+
+      this.$_id = null;
+      if (typeof idProp === 'function') {
+        this.$_getId = function () {
+          return idProp.call(_this, _this);
+        };
+      } else {
+        this.$_getId = function () {
+          return _this[idProp];
+        };
+      }
+      this.$watch(this.$_getId, {
+        handler: function handler(value) {
+          var _this2 = this;
+
+          this.$nextTick(function () {
+            _this2.$_id = value;
+          });
+        },
+
+        immediate: true
+      });
+      this.$_updateIdState();
+    },
+    beforeUpdate: function beforeUpdate() {
+      this.$_updateIdState();
+    },
+
+
+    methods: {
+      /**
+       * Initialize an idState
+       * @param {number|string} id Unique id for the data
+       */
+      $_idStateInit: function $_idStateInit(id) {
+        var factory = this.$options.idState;
+        if (typeof factory === 'function') {
+          var data = factory.call(this, this);
+          vm.$set(store, id, data);
+          this.$_id = id;
+          return data;
+        } else {
+          throw new Error('[mixin IdState] Missing `idState` function on component definition.');
+        }
+      },
+
+
+      /**
+       * Ensure idState is created and up-to-date
+       */
+      $_updateIdState: function $_updateIdState() {
+        var id = this.$_getId();
+        if (id == null) {
+          console.warn('No id found for IdState with idProp: \'' + idProp + '\'.');
+        }
+        if (id !== this.$_id) {
+          if (!store[id]) {
+            this.$_idStateInit(id);
+          }
+          this.idState = store[id];
+        }
       }
     }
   };
+};
+
+function registerComponents(Vue$$1, prefix) {
+  Vue$$1.component(prefix + 'recycle-scroller', RecycleScroller);
+  Vue$$1.component(prefix + 'RecycleScroller', RecycleScroller);
+  Vue$$1.component(prefix + 'dynamic-scroller', DynamicScroller);
+  Vue$$1.component(prefix + 'DynamicScroller', DynamicScroller);
+  Vue$$1.component(prefix + 'dynamic-scroller-item', DynamicScrollerItem);
+  Vue$$1.component(prefix + 'DynamicScrollerItem', DynamicScrollerItem);
 }
-/* style inject SSR */
 
-var RecycleList = __vue_normalize__$1(__vue_template__$1, __vue_inject_styles__$1, typeof __vue_script__$1 === 'undefined' ? {} : __vue_script__$1, __vue_scope_id__$1, __vue_is_functional_template__$1, __vue_module_identifier__$1, typeof __vue_create_injector__$1 !== 'undefined' ? __vue_create_injector__$1 : function () {}, typeof __vue_create_injector_ssr__ !== 'undefined' ? __vue_create_injector_ssr__ : function () {});
-
-function registerComponents(Vue, prefix) {
-  Vue.component(prefix + 'virtual-scroller', VirtualScroller);
-  Vue.component(prefix + 'recycle-list', RecycleList);
-}
-
-var plugin$2 = {
+var plugin = {
   // eslint-disable-next-line no-undef
-  version: "0.12.0",
-  install: function install(Vue, options) {
+  version: "1.0.0-rc.2",
+  install: function install(Vue$$1, options) {
     var finalOptions = Object.assign({}, {
       installComponents: true,
       componentsPrefix: ''
@@ -1506,21 +1740,21 @@ var plugin$2 = {
     }
 
     if (finalOptions.installComponents) {
-      registerComponents(Vue, finalOptions.componentsPrefix);
+      registerComponents(Vue$$1, finalOptions.componentsPrefix);
     }
   }
 };
 
 // Auto-install
-var GlobalVue$2 = null;
+var GlobalVue = null;
 if (typeof window !== 'undefined') {
-  GlobalVue$2 = window.Vue;
+  GlobalVue = window.Vue;
 } else if (typeof global !== 'undefined') {
-  GlobalVue$2 = global.Vue;
+  GlobalVue = global.Vue;
 }
-if (GlobalVue$2) {
-  GlobalVue$2.use(plugin$2);
+if (GlobalVue) {
+  GlobalVue.use(plugin);
 }
 
-export default plugin$2;
-export { VirtualScroller, RecycleList };
+export { RecycleScroller, DynamicScroller, DynamicScrollerItem, IdState };
+export default plugin;

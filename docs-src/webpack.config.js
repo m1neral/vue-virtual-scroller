@@ -4,7 +4,7 @@ const VueLoaderPlugin = require('vue-loader/lib/plugin')
 
 module.exports = {
   mode: 'development',
-  entry: './src/main.js',
+  entry: ['@babel/polyfill', './src/main.js'],
   output: {
     path: path.resolve(__dirname, '../docs'),
     publicPath: '/',
@@ -55,8 +55,8 @@ module.exports = {
   ],
   devServer: {
     historyApiFallback: true,
-    noInfo: true,
     contentBase: path.join(__dirname, '..', 'docs'),
+    disableHostCheck: true,
   },
   performance: {
     hints: false,

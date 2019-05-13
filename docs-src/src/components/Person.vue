@@ -1,9 +1,9 @@
 <template>
-  <tr class="person" @click="edit">
-    <td class="index">
+  <div class="tr person" @click="edit">
+    <div class="td index">
       {{index}}
-    </td>
-    <td>
+    </div>
+    <div class="td">
       <div class="info">
         <img
           class="avatar"
@@ -12,8 +12,8 @@
         />
         <span>{{item.value.name}}</span>
       </div>
-    </td>
-  </tr>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -35,3 +35,28 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.index {
+  color: rgba(0, 0, 0, 0.2);
+  width: 55px;
+  text-align: right;
+  flex: auto 0 0;
+}
+
+.person .td:first-child {
+  padding: 12px;
+}
+
+.person .info {
+  display: flex;
+  align-items: center;
+  height: 48px;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  margin-right: 12px;
+}
+</style>
