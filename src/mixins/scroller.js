@@ -86,7 +86,7 @@ export default {
   methods: {
     getListenerTarget () {
       let target = ScrollParent(this.$el)
-      if (target === window.document.documentElement || target === window.document.body) {
+      if (target === window.document.documentElement) {
         target = window
       }
       return target
